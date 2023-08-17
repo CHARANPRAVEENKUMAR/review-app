@@ -1,11 +1,13 @@
 import React from 'react'
+import {ImSpinner3} from 'react-icons/im'
 
-export default function Submit({value}) {
+export default function Submit({value,busy}) {
   return (
-    <input
+    <button
     type="submit"
-    className="bg-white text-secondary rounded w-full hover:bg-opacity-90 transition font-semibold text-lg cursor-pointer p-1"
-    value={value}
-    />
+    className="dark:bg-white bg-secondary text-white dark:text-secondary rounded w-full hover:bg-opacity-90 transition font-semibold text-lg cursor-pointer h-10 flex items-center justify-center">
+
+    {busy? <ImSpinner3 className="animate-spin"/>:value}
+    </button>
   )
 }

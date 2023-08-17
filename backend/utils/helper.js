@@ -10,3 +10,7 @@ exports.generateRandomByte = () => {
         });
     });
 };
+
+exports.handleNotFound=(req,res)=>{
+    res.json({error:"not found"})
+}

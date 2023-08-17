@@ -6,7 +6,6 @@ const { isValidObjectId } = require("mongoose");
 const { generateOTP, generateMailTransporter } = require("../utils/mail");
 const passwordResetToken = require("../models/passwordResetToken");
 const { generateRandomByte } = require("../utils/helper");
-const { use } = require("../routes/user");
 
 exports.create=async (req,res)=>{
     const {name,email,password}=req.body;
@@ -48,7 +47,13 @@ exports.create=async (req,res)=>{
         `,
     });
 
-    res.status(201).json({ message:"please verify your email messag sent to acc"})
+    res.status(201).json({ 
+      user:{
+        id:newUser._id,
+        name:newUser.name,
+        email:newUser.email,
+      },
+    });
 };
 
 
@@ -86,7 +91,16 @@ exports.verifyEmail=async (req,res)=>{
        
         `,
     });
-      res.json({msg:"your email is verified"});
+    const jwtToken=jwt.sign(
+      {userId:user._id},process.env.JWT_SECRET
+     );
+      res.json({user:{
+        id:user._id,
+        name:user.name,
+        email:user.email,
+        token:jwtToken,
+        isVerified:user.isVerified 
+      },message:"your email is verified"});
 
 }
 
@@ -145,7 +159,7 @@ exports.forgetPassword=async (req,res)=>{
   });
   await newPasswordResetToken.save();
 
-  const resetPasswordUrl = `http://localhost:3000/reset-password?token=${token}&id=${user._id}`;
+  const resetPasswordUrl = `http://localhost:3000/auth/reset-password?token=${token}&id=${user._id}`;
 
   const transport = generateMailTransporter();
 
@@ -196,12 +210,12 @@ exports.signIn=async (req,res)=>{
 
    const matched=await user.compairePassword(password);
    if(!matched) return res.status(400).json({error:"email/password are mismatched"});
-   const {_id,name}=user;
+   const {_id,name,isVerified}=user;
    const jwtToken=jwt.sign(
     {userId:_id},process.env.JWT_SECRET
    );
 
-   res.json({user:{id:_id,name,email,token:jwtToken}});
+   res.json({user:{id:_id,name,email,token:jwtToken,isVerified}});
 
 }
 
