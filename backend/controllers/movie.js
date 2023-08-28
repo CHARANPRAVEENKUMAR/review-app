@@ -31,7 +31,7 @@ exports.createMovie=async(req,res)=>{
 
       if (director) {
         if (!isValidObjectId(director))
-          return res.json({error:"invalid director id!"});
+          return res.status(403).json({error:"invalid director id!"});
         newMovie.director = director;
       }
     
@@ -40,7 +40,7 @@ exports.createMovie=async(req,res)=>{
           if (!isValidObjectId(writerId)){
             console.log(writerId);
             console.log(isValidObjectId(writerId));
-            return res.json({error:"invalid writer id!"});
+            return res.status(403).json({error:"invalid writer id!"});
         }
         }
         newMovie.writers = writers;
@@ -82,7 +82,7 @@ exports.createMovie=async(req,res)=>{
 exports.updateMovieWithOutPoster=async (req,res)=>{
     const {movieId}=req.params;
     const {body}=req;
-    if(!isValidObjectId(movieId)) return res.json({error:"Invalid movie Id!"});
+    if(!isValidObjectId(movieId)) return res.status(403).json({error:"Invalid movie Id!"});
     const movie=await Movie.findById(movieId);
     if(!movie) return res.status(404).json({error:"Movie Not Found!"});
     const {title,storyLine,director,releaseDate,status,type,genres,tags,cast,writers,trailer,language}=req.body;
@@ -100,7 +100,7 @@ exports.updateMovieWithOutPoster=async (req,res)=>{
     //these are optional 
     if (director) {
       if (!isValidObjectId(director))
-        return res.json({error:"invalid director id!"});
+        return res.status(403).json({error:"invalid director id!"});
       movie.director = director;
     }
   
@@ -109,7 +109,7 @@ exports.updateMovieWithOutPoster=async (req,res)=>{
         if (!isValidObjectId(writerId)){
           console.log(writerId);
           console.log(isValidObjectId(writerId));
-          return res.json({error:"invalid writer id!"});
+          return res.status(403).json({error:"invalid writer id!"});
       }
       }
       movie.writers = writers;
@@ -141,7 +141,7 @@ exports.updateMovie=async (req,res)=>{
     //these are optional 
     if (director) {
       if (!isValidObjectId(director))
-        return res.json({error:"invalid director id!"});
+        return res.status(403).json({error:"invalid director id!"});
       movie.director = director;
     }
   
@@ -150,7 +150,7 @@ exports.updateMovie=async (req,res)=>{
         if (!isValidObjectId(writerId)){
           console.log(writerId);
           console.log(isValidObjectId(writerId));
-          return res.json({error:"invalid writer id!"});
+          return res.status(403).json({error:"invalid writer id!"});
       }
       }
       movie.writers = writers;
@@ -161,7 +161,7 @@ exports.updateMovie=async (req,res)=>{
       const posterID=movie.poster?.public_id //remove update poster
       if(posterID){
       const {result} =await cloudinary.uploader.destroy(posterID);
-      if(result!=='ok') return res.json({error:"couldnot update poster at moment!"})
+      if(result!=='ok') return res.status(403).json({error:"couldnot update poster at moment!"})
       }
         //uploading poster secure_url:url,public_id
         const {secure_url,public_id,responsive_breakpoints}=await cloudinary.uploader.upload(req.file.path,{
@@ -187,7 +187,7 @@ exports.updateMovie=async (req,res)=>{
   }
     await movie.save();
   
-    res.json({message:"Movie is updated",movie:{
+    res.status(200).json({message:"Movie is updated",movie:{
       id:movie._id,
       title:movie.title,
       poster:movie.poster?.url,
@@ -200,14 +200,14 @@ exports.updateMovie=async (req,res)=>{
 exports.removeMovie=async (req,res)=>{
   //1.delete poster2.delete trailer 3.delete body 
   const {movieId}=req.params;
-  if(!isValidObjectId(movieId)) return res.json({error:"Invalid movie Id!"});
+  if(!isValidObjectId(movieId)) return res.status(403).json({error:"Invalid movie Id!"});
     const movie=await Movie.findById(movieId);
     if(!movie) return res.status(404).json({error:"Movie Not Found!"});
   //check if poster is or not to remove
   const posterId=movie.poster?.public_id;
   if(posterId){
    const {result}= await cloudinary.uploader.destroy(posterId);
-   if(result!=="ok") res.json({error:"cant remove postser from cloud"});
+   if(result!=="ok") res.json({error:"cant remove poster from cloud"});
   }
    const trailerId=movie.trailer?.public_id;
    if(!trailerId){return res.json({error:"couldnt find trailer in cloud!"})}
@@ -272,3 +272,17 @@ exports.getMovieForUpdate=async(req,res)=>{
     }),
   },});
 };
+exports.searchMovies=async(req,res)=>{
+  const {title}=req.query;
+  if(!title.trim())  return sendError(res,'invalid request!');
+  const movies=await Movie.find({title:{$regex:title,$options:"i"}});
+  res.json({results:movies.map((m)=>{
+      return {
+        id:m._id,
+        title:m.title,
+        poster:m.poster?.url,
+        genres:m.genres,
+        status:m.status,
+      }
+  })})
+}
