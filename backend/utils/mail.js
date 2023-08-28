@@ -11,7 +11,8 @@ exports.generateMailTransporter=()=>nodemailer.createTransport({
     host: "sandbox.smtp.mailtrap.io",
     port: 2525,
     auth: {
-      user: "54967c5874d618",
-      pass: "42787df265cda5"
+      user: "3f978520a0f3b9",
+      pass: "334f236dadb80a"
     }
   });
+

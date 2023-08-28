@@ -2,17 +2,17 @@ import React from 'react'
 import ThemeProvider from './ThemeProvider';
 import NotificationProvider from './NotificationProvider';
 import AuthProvider from './AuthProvider';
+import SearchProvider from './SearchProvider';
 
 export default function ContextProviders({children}) {
   return (
-    <AuthProvider>
     <NotificationProvider>
-    
-    <ThemeProvider>
-    {children}
-    </ThemeProvider>
-   
+      <SearchProvider>
+        <AuthProvider>5
+          <ThemeProvider>{children}</ThemeProvider>
+        </AuthProvider>
+      </SearchProvider>
     </NotificationProvider>
-    </AuthProvider>
+   
   )
 }

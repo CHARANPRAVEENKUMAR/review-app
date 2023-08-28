@@ -42,6 +42,7 @@ export default function Signin(){
     let handleSubmit=async (e)=> {
         e.preventDefault(); //to prevent irregular issues
        const {ok,error}=validateUserInfo(userInfo); //checking errors
+       
        if(!ok) return updateNotification("error",error)
        //if(!ok) return console.log(error)
     
@@ -49,7 +50,7 @@ export default function Signin(){
        handleLogin(userInfo.email,userInfo.password); 
         };
 
-    useEffect(()=>{if(isLoggedIn)navigate('/')},[isLoggedIn]);
+    // useEffect(()=>{if(isLoggedIn)navigate('/')},[isLoggedIn]);
 
     return (
     <FormContainer>

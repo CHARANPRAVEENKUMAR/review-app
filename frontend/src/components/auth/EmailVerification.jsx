@@ -7,7 +7,7 @@ import { commonModalClasses } from "../../utils/theme";
 import FormContainer from "../form/FormContainer";
 import { resendEmailVerificationToken, verifyUserEmail } from '../../api/auth'
 import { useNotification,useAuth } from '../../hooks'
-
+let currentOTPIndex;
 const OTP_LENGTH=6;
 const isValidOTP=(otp)=>
   {    
@@ -50,10 +50,10 @@ export default function EmailVerification() {
   const handleOtpChange = ({ target }, index) => {
     const { value } = target;
     const newOtp = [...otp];
-    newOtp[index] = value.substring(value.length - 1, value.length);
+    newOtp[currentOTPIndex] = value.substring(value.length - 1, value.length);
 
-    if (!value) focusPrevInputField(index);
-    else focusNextInputField(index);
+    if (!value) focusPrevInputField(currentOTPIndex);
+    else focusNextInputField(currentOTPIndex);
     setOtp([...newOtp]);
   };
   
@@ -64,10 +64,11 @@ export default function EmailVerification() {
   }
 
   const handleKeyDown=({key},index)=>{
+    currentOTPIndex=index;
     console.log(`key is ${key}`)
     console.log(`index is ${index}`)
     if(key==='Backspace')
-    focusPrevInputField(index)
+    focusPrevInputField(currentOTPIndex)
 }
 
    const handleSubmit=async (e)=>{
@@ -121,7 +122,7 @@ export default function EmailVerification() {
                   type="number"
                   key={index} 
                   value={otp[index]}
-                  onChange={(e) => handleOtpChange(e, index)}
+                  onChange={handleOtpChange}
                   onKeyDown={(e)=>handleKeyDown(e,index)}
                   className="w-12 h-12 bg-transparent outline-none rounded font-semibold  border-2 dark:border-dark-subtle border-light-subtle text-center dark:text-white text- text-xl focus:border-primary dark:focus:border-primary spin-button-none"
                   />

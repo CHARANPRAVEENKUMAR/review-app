@@ -1,6 +1,8 @@
 import React, { createContext, useEffect, useState } from 'react'
 import { getIsAuth, signInUser } from '../api/auth';
-import { useNotification } from '../hooks';
+import { useNavigate } from 'react-router-dom';
+//import { useNotification } from '../hooks';
+
 
 export const AuthContext= createContext();
 
@@ -13,7 +15,8 @@ const defaultAuthInfo={
 
 export default function AuthProvider({children}) {
     const [authInfo,setAuthInfo]=useState({...defaultAuthInfo});
-   // const {updateNotification}=useNotification();
+    //const {updateNotification}=useNotification();
+    const navigate=useNavigate();
 
     const handleLogin= async(email,password)=>{
          setAuthInfo({...authInfo,isPending:true})
@@ -23,6 +26,7 @@ export default function AuthProvider({children}) {
            return setAuthInfo({...authInfo,isPending:false,error})}
 
          //if it passes all then xeceute this
+         navigate("/",{replace:true});//true wont allow you to go back
     setAuthInfo({
       profile:{...user},
       isLoggedIn:true,
@@ -39,7 +43,7 @@ export default function AuthProvider({children}) {
      setAuthInfo({...authInfo,isPending:true})
     const  {error, user}=await getIsAuth(token);
     if(error) {
-     // updateNotification("error",error);
+      //updateNotification("error",error);
       return setAuthInfo({...authInfo,isPending:false,error})}
     
 
@@ -53,7 +57,7 @@ export default function AuthProvider({children}) {
     const handleLogout=()=>{
       localStorage.removeItem("auth-token");
       setAuthInfo({...defaultAuthInfo});
-
+    //  navigate();
     }
 
     useEffect(()=>{isAuth();},[])

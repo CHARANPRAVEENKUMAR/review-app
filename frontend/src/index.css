@@ -4,9 +4,9 @@
 }
 
 /*For Firefox*/
-.spin-button-none[type="number"] {
+/* .spin-button-none[type="number"] {
   -moz-appearance: textfield;
-}
+} */
 
 
 .bounce-custom {
@@ -28,9 +28,54 @@
   }
 }
 
+.animate-scale{
+  transform-origin:0% 0%;
+  animation:scale 0.2s;
+}
+.animate-scale-reverse{
+  transform-origin:0% 0%;
+  animation:scale 0.2s reverse forwards;
+}
+@keyframes scale{
+  0%{
+      transform:scaleY(0);
+  }
+  100%{
+      transform:scaleY(1);
+  }
+}
+
+/* width */
+.custom-scroll-bar::-webkit-scrollbar {
+  width: 3px; 
+  height:4px; 
+}
+/*width is for vetical scroll bar
+height is  for horizontal scrollbar*/
+
+/* Track */
+.custom-scroll-bar::-webkit-scrollbar-track {
+  background: #222222;
+}
+
+/* Handle */
+.custom-scroll-bar::-webkit-scrollbar-thumb {
+  background: rgb(224,201,251);
+}
+
+/* Handle on hover */
+.custom-scroll-bar::-webkit-scrollbar-thumb:hover {
+  background: rgb(143,190,245);
+}
+
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* @import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities'; */
 
 .navbar-top{
     background-color: black;

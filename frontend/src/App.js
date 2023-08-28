@@ -9,8 +9,16 @@ import ForgetPassword from './components/auth/ForgetPassword';
 import ConfirmPassword from './components/auth/ConfirmPassword';
 import Home from './components/Home';
 import NotFound from './components/NotFound';
+import { useAuth } from './hooks';
+import AdminNavigator from './navigator/AdminNavigator';
+
+
 
 export default function App() {
+  const {authInfo}=useAuth();
+  const isAdmin=authInfo.profile?.role==='admin'; //? to neglect when profile is null or user is not login 
+  
+  if(isAdmin) return <AdminNavigator/>
   return (
   <>
   <Navbar />
