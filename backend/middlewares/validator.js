@@ -89,6 +89,8 @@ exports.validateTrailer=check("trailer").isObject().withMessage("trialer Info mu
      catch(error){ throw Error("trailer url is invalid!") }
 })
 
+exports.validateRatings=check('rating',"Rating must be a number between 1 and 10").isFloat({min:0,max:10});
+
 
 exports.validate=(req,res,next)=>{
     const error=validationResult(req).array();

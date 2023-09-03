@@ -7,7 +7,7 @@ import { useNotification } from '../../../hooks';
 export default function UpdateMovie({visible,onSuccess,movieId}) {
     const [busy,setBusy]=useState(false);
     const [ready,setReady]=useState(false);
-    const [selectedMovie,setSelectedMovie]=useState(null);
+    const [selectedMovie,setSelectedMovie]=useState(false);
 
     const {updateNotification}=useNotification();
 

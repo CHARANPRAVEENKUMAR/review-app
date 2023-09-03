@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { deleteMovie } from '../api/movie';
 import { useNotification } from '../hooks';
 import UpdateMovie from './admin/modals/UpdateMovie';
+import { getPoster } from '../utils/helper';
 
 const MovieListItem=({movie,afterDelete,afterUpdate})=>
 {
@@ -60,14 +61,14 @@ const MovieListItem=({movie,afterDelete,afterUpdate})=>
 }
 const MovieCard=({movie,onDeleteClick,onOpenClick,onEditClick})=>
 {
-    const {poster,genres=[],title,status}=movie
+    const {poster,genres=[],title,status,responsivePosters}=movie;
     return(
     <table className='w-full '>
         <tbody>
             <tr>
                 <td>
                     <div className="w-24">
-                        <img className="w-24 aspect-video object-cover" src={poster} alt={title} />
+                        <img className="w-24 aspect-video object-cover" src={getPoster(responsivePosters)|| poster} alt={title} />
                     </div>
                 </td>
                 <td className='w-full pl-5'>

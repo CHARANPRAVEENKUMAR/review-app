@@ -79,3 +79,13 @@ export const getActors=async(pageNo,limit)=>{
             return catchError(error);
      }
 }
+export const getActorProfile=async(id)=>{
+    const token=getToken();
+    try{
+        const {data}=await client(`/actor/single/${id}`);
+        return data;
+      }
+     catch(error){
+            return catchError(error);
+     }
+}

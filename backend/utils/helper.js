@@ -1,5 +1,7 @@
 const crypto=require("crypto");
-const cloudinary=require("../cloud")
+const cloudinary=require("../cloud");
+const Review = require("../models/review");
+const { match } = require("assert");
 
 exports.generateRandomByte = () => {
     return new Promise((resolve, reject) => {
@@ -47,6 +49,106 @@ exports.parseData=(req,res,next)=>{
     next();
 }
 
+exports.averageRatingPipeline=(movieId)=>{
+    return [
+    {
+        $lookup:
+          {
+            from: "Review",
+            localField: "rating",
+            foreignField: '_id',
+            as: 'avgRat',
+          },
+    },
+    {
+      $match:{parentMovie:movieId}
+    },
+    {
+      $group:{
+        _id:null,
+        ratingAvg:{
+          $avg:'$rating'
+        },
+        reviewCount:{
+          $sum:1,
+        },
+      },
+    },
+  ]};
+exports.relatedMovieAggregation=(movieId,tags)=>{
+   return  [
+        {
+          $lookup:{
+            from:"Movie",
+            localField:'tags',
+            foreignField:'_id',
+            as:'relatedMovies',
+          }
+        },
+          {
+              $match:{
+                tags:{$in:[...tags]}, //similar movies with tags
+                _id:{$ne:movieId}, //ne-notequalto presentmovie
+              },
+          },
+          {
+            $project:{
+              title:1,
+              poster:'$poster.url',
+              responsivePosters: "$poster.responsive",
+            }
+          },
+          {
+            $limit:5
+          }
+      ]
+}
 
+exports.getAverageRatings=async(movieId)=>{
+    const [aggregatedResponse]=await Review.aggregate(this.averageRatingPipeline(movieId));
+  const reviews={};
+  if(aggregatedResponse){
+    const {ratingAvg,reviewCount}=aggregatedResponse;
+    reviews.ratingAvg= parseFloat(ratingAvg).toFixed(1); //to convert 7.75 to 7.7
+    reviews.reviewCount=reviewCount;
+  }
+  return reviews;
+}
 
+exports.topRatedMoviesPipeline=(type)=>{   //aggregation pipeline
+  const matchOptions={     //check this 
+    reviews:{$exists:true}, //present
+    status:{$eq:"public"}, //equalto
+    } 
+    if(type)matchOptions.type={$eq:type}
 
+    return [
+        {
+            $lookup:{
+              from:"Movie",   //in movidb havngi most reviews  mondodb aggregation pipelines
+              localField:"reviews",
+              foreignField:"_id",
+              as:"topRated"
+            }
+      },
+      {
+        $match:matchOptions,
+      },
+      {
+        $project:{
+          title:1,
+          poster:'$poster.url',
+          responsivePosters:'$poster.responsive',
+          reviewCount:{$size:"$reviews"},
+        }
+      },
+      {
+        $sort:{
+          reviewCount:-1 //desecnding which means having high reviews
+        }
+      },
+      {
+        $limit:5
+      },
+      ]
+}

@@ -100,7 +100,7 @@ export const searchMovieForAdmin=async(title)=>{
     
 
 export const updateMovie=async(id,formData)=>{
-    const token=getToken();
+    const token=getToken(); //for authentication 
     try{
         const {data}=await client.patch("/movie/update/"+id,formData,
         {
@@ -109,6 +109,56 @@ export const updateMovie=async(id,formData)=>{
                 'content-type':"multipart/form-data",
             },
         });
+        return data;
+      }
+     catch(error){
+       return catchError(error);
+     }
+}
+export const getTopRatedMovies=async(type,signal)=>{  //no  need of token because no need to be authenticated
+    try{
+        let endpoint=`/movie/top-rated`
+        if(type) endpoint=endpoint+ '?type='+type;
+        
+        const {data}=await client(endpoint,{signal});  //here we are making our endpoint dynamic //abort cintroller javavsdcript
+        return data;
+      }
+     catch(error){
+       return catchError(error);
+     }
+}
+
+export const getLatestUploads=async()=>{ 
+    try{
+        const {data}=await client("/movie/latest-uploads"); 
+        return data;
+      }
+     catch(error){
+       return catchError(error);
+     }
+}
+    
+export const getSingleMovie=async(id)=>{ 
+    try{
+        const {data}=await client("/movie/single/"+id); 
+        return data;
+      }
+     catch(error){
+       return catchError(error);
+     }
+}
+export const getRelatedMovies=async(id)=>{ 
+    try{
+        const {data}=await client("/movie/related/"+id); 
+        return data;
+      }
+     catch(error){
+       return catchError(error);
+     }
+}
+export const searchPublicMovies=async(title)=>{ 
+    try{
+        const {data}=await client("/movie/search-public/?title="+title); 
         return data;
       }
      catch(error){

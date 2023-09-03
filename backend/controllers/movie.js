@@ -1,7 +1,8 @@
-const { isValidObjectId } = require("mongoose");
+const { isValidObjectId, default: mongoose } = require("mongoose");
 const cloudinary=require("../cloud/index");
 const Movie=require("../models/movie");
-const { formatActor, sendError } = require("../utils/helper");
+const Review=require("../models/review");
+const { formatActor, sendError, averageRatingPipeline, getAverageRatings, relatedMovieAggregation, topRatedMoviesPipeline } = require("../utils/helper");
 
 exports.uploadTrailer=async(req,res)=>{
        const {file}=req; //destructure the file
@@ -22,6 +23,7 @@ exports.createMovie=async(req,res)=>{
         releaseDate,
         status,
         type,
+        cast,
         genres,
         tags,
         trailer,
@@ -72,9 +74,10 @@ exports.createMovie=async(req,res)=>{
         // console.log(cloudres);
         // console.log(cloudres.responsive_breakpoints[0].breakpoints)
         res.status(201).json({
+          movie:{
           id:newMovie._id,
           title,
-        });
+      },});
     //  console.log(req.body);
 
 }
@@ -229,6 +232,7 @@ exports.getMovies=async(req,res)=>{
       id:movie._id,
       title:movie.title,
       poster:movie.poster?.url,
+      responsivePosters:movie.poster?.responsive,
       genres:movie.genres,
       status:movie.status,
   }))
@@ -285,4 +289,139 @@ exports.searchMovies=async(req,res)=>{
         status:m.status,
       }
   })})
+}
+
+exports.getLatestUploads=async(req,res)=>{
+  const {limit=5}=req.query; //by defult 5 
+ const results=await Movie.find({status:"public"}).sort('-createdAt').limit(parseInt(limit));
+ const movies=results.map((m)=>{
+  return {
+    id:m._id,
+    title:m.title,
+    storyline:m.storyline,
+    poster:m.poster?.url,
+    responsivePosters:m.poster.responsive,
+    trailer:m.trailer.url,
+  }
+ })
+  res.json({movies});
+}
+
+exports.getSingleMovie=async(req,res)=>{
+    const {movieId}=req.params;
+    // mongoose.Types.ObjectId(movieId) //we need to convert id like this while passing object to aggregation
+    if(!isValidObjectId(movieId)) sendError(res,'Movie is not valid');
+
+  const movie=await Movie.findById(movieId).populate('director writers cast.actor'); //populate is used to explore the refered part to instead of their id
+  //study about aggregation operations in mongoDB passing data from one stage to another stage using 
+  //aggregation pipeline stages in mongodb documenattion
+  // const [aggregatedResponse]=await Review.aggregate(averageRatingPipeline(movie._id));
+  // const reviews={};
+  // if(aggregatedResponse){
+  //   const {ratingAvg,reviewCount}=aggregatedResponse;
+  //   reviews.ratingAvg= parseFloat(ratingAvg).toFixed(1); //to convert 7.75 to 7.7
+  //   reviews.reviewCount=reviewCount;
+  // }
+  const reviews=await getAverageRatings(movie._id);
+
+  const {_id:id,title,storyLine,cast,writers,director,releaseDate,genres,tags,poster,trailer,language,type}=movie;  //destructure according t our requirement
+  //we need to return only required data instead of all data inside movie 
+  //refactoring data according to our need for frontend
+  // res.json({movie}) //see this you can understand
+  res.json({movie:{
+      id,
+      title,
+      storyLine,
+      releaseDate,
+      genres,
+      tags,
+      language,
+      type,
+      poster:poster?.url,
+      trailer:trailer?.url,
+      cast:cast.map((c)=>({
+        id:c._id,
+        profile:{
+          id:c.actor._id,
+          name:c.actor.name,
+          avatar:c.actor?.avatar?.url,
+        },
+        leadActor:c.leadActor,
+        roleAs:c.roleAs,
+      })),
+      writers:writers.map(w=>({
+        id:w._id,
+        name:w.name,
+      })),
+      director:{
+        id:director._id,
+        name:director.name,
+      },
+      reviews:{...reviews},
+      
+  },
+})
+
+}
+exports.getRelatedMovies=async(req,res)=>{
+  const {movieId}=req.params;
+  if(!isValidObjectId(movieId)) return sendError(res,"Invalid Movie ID!");
+  const movie=await Movie.findById(movieId);
+  const movies=await Movie.aggregate(relatedMovieAggregation(movie._id,movie.tags));
+  // const relatedMovies=await Promise.all(movies.map(async(m)=>{
+  //   const reviews=await getAverageRatings(m._id);
+  //   return {
+  //     id:m._id,
+  //     title:m.title,
+  //     poster:m.poster,
+  //     reviews:{...reviews}
+  //   }
+
+  // }))
+  const mapMovies = async (m) => {
+    const reviews = await getAverageRatings(m._id);
+
+    return {
+      id: m._id,
+      title: m.title,
+      poster: m.poster,
+      reviews: { ...reviews },
+    };
+  };
+  const relatedMovies = await Promise.all(movies.map(mapMovies));
+    res.json({movies:relatedMovies});
+}
+exports.getTopRatedMovies=async(req,res)=>{
+  const {type="Film"}=req.query;  //by default film -- making it optional 
+  const movies=await Movie.aggregate(topRatedMoviesPipeline(type));  //mongodb aggregation pipelines it is a framework 
+  const mapMovies=async (m)=>{
+    const reviews=await getAverageRatings(m._id);
+    return {
+      id:m._id,
+      title:m.title,
+      poster:m.poster,
+      responsivePosters:m.responsivePosters,
+      reviews:{...reviews},
+    }
+  }
+  const topRatedMovies=await Promise.all(movies.map(mapMovies))
+  res.json({movies:topRatedMovies});
+}
+
+exports.searchPublicMovies=async(req,res)=>{
+  const {title}=req.query;
+  if(!title.trim())  return sendError(res,'invalid request!');
+  const movies=await Movie.find({title:{$regex:title,$options:"i"},status:'public',});
+  const mapMovies=async (m)=>{
+    const reviews=await getAverageRatings(m._id);
+    return {
+      id:m._id,
+      title:m.title,
+      poster:m.poster?.url,
+      responsivePosters:m.poster?.responsive,
+      reviews:{...reviews},
+    }
+  }
+  const results=await Promise.all(movies.map(mapMovies))
+  res.json({results});
 }
